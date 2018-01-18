@@ -3,11 +3,11 @@ var skirt = {
   name : "skirt",
   type : null,
   waistMeasurement : 80,
-  skirtLength : 20,
+  skirtLength : 80,
   seamAllowance : 0,
   hemAllowance : 0,
   waistBandWidth : 0,
-  fabricWidth : 112
+  fabricWidth : 112 
 }
 
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
@@ -26,27 +26,113 @@ var types = [
       r = waistMeasurement/Math.PI
       R = skirtLength + r
       angle = Math.PI
-      return [
-        {
-          path:arc(  
-            {
-              innerRadius: scale(r), 
-              outerRadius: scale(R),
-              startAngle: Math.PI,
-              endAngle:0,
-            }),
-          x:0,
-          y:scale(R)
-        }
-      ]
+      if (2*R <= fabricWidth){ 
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI,
+                endAngle:0,
+              }),
+            x:0,
+            y:scale(R)
+          }
+        ]
+      } else {
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 0,
+                endAngle:Math.PI/2,
+              }),
+            x:0,
+            y:0
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI,
+                endAngle: 3*Math.PI/2,
+              }),
+            x:scale(Math.sqrt(4*R**2-fabricWidth**2)),
+            y: scale(fabricWidth)
+          }
+        ]
+        
+      }
     }
   },
   {
-  name: "Full circle with centre back seam",	
+    name: "Full circle with centre back seam",	
     R: function(skirtLength,waistMeasurement){
-    return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement){}
+          r = skirt.waistMeasurement/Math.PI
+          R = skirt.skirtLength + r
+          return(R)
+        },
+    layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
+      r = waistMeasurement/(2*Math.PI)
+      R = skirtLength + r
+      if (2*R <= fabricWidth){ // one piece 
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 0,
+                endAngle:0,
+              }),
+            x:scale(R),
+            y:scale(R)
+          }
+        ]
+      } else { //3 pieces
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 0,
+                endAngle:Math.PI/2,
+              }),
+            x:0,
+            y:0
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI/2,
+                endAngle: 3*Math.PI/2,
+              }),
+            x:scale(Math.max(Math.sqrt(4*R**2-fabricWidth**2),R)),
+            y:scale(fabricWidth)
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 3*Math.PI/2,
+                endAngle: 3.999*Math.PI/2
+              }),
+            x:2*scale(Math.max(Math.sqrt(4*R**2-fabricWidth**2),R)),
+            y: 0
+          }
+        ]
+        
+      }
+    } 
+    
   },
   
   {
