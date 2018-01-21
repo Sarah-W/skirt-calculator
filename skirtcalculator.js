@@ -3,7 +3,7 @@ var skirt = {
   name : "skirt",
   type : null,
   waistMeasurement : 80,
-  skirtLength : 80,
+  skirtLength : 85,
   seamAllowance : 0,
   hemAllowance : 0,
   waistBandWidth : 0,
@@ -87,7 +87,7 @@ var types = [
                 innerRadius: scale(r), 
                 outerRadius: scale(R),
                 startAngle: 0,
-                endAngle:0,
+                endAngle:4*Math.PI,
               }),
             x:scale(R),
             y:scale(R)
@@ -123,7 +123,7 @@ var types = [
                 innerRadius: scale(r), 
                 outerRadius: scale(R),
                 startAngle: 3*Math.PI/2,
-                endAngle: 3.999*Math.PI/2
+                endAngle: 2*Math.PI
               }),
             x:2*scale(Math.max(Math.sqrt(4*R**2-fabricWidth**2),R)),
             y: 0
@@ -133,44 +133,126 @@ var types = [
       }
     } 
     
-  },
-  
+  },  
   {
   name: "Full circle without centre back seam",	
-    R: function(skirtLength,waistMeasurement){
-    return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement){}
+     R: function(skirtLength,waistMeasurement){
+          r = skirt.waistMeasurement/Math.PI
+          R = skirt.skirtLength + r
+          return(R)
+        },
+    layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
+      r = waistMeasurement/(2*Math.PI)
+      R = skirtLength + r
+      if (2*R <= fabricWidth){ // one piece 
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 0,
+                endAngle:4*Math.PI,
+              }),
+            x:scale(R),
+            y:scale(R)
+          }
+        ]
+      } else { //2 pieces
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+//                startAngle: 3*Math.PI/2,
+                startAngle: -1*Math.PI/2,
+                endAngle:Math.PI/2,
+              }),
+            x:scale(R),
+            y:0
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI/2,
+                endAngle: 3*Math.PI/2,
+              }),
+            x:scale(R+Math.sqrt(4*R**2-fabricWidth**2)),
+            y:scale(fabricWidth)
+          }
+        ]
+      }
+    }
   },
-  
   {
   name: "Three Quarter circle, straight sides together",
-    R: function(skirtLength,waistMeasurement){
-    return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement){}
-  },
-  
-  {
-  name: "Three Quarter circle layout on selvedge, straight sides together",
-    R: function(skirtLength,waistMeasurement){
-    return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement){}
+     R: function(skirtLength,waistMeasurement){
+          r = skirt.waistMeasurement/Math.PI
+          R = skirt.skirtLength + r*2/3
+          return(R)
+        },
+    layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
+      r = waistMeasurement/(2*Math.PI)
+      R = skirtLength + r
+      
+      x = 3*R - fabricWidth
+      yOffset = 0
+      if ((fabricWidth - R + r*Math.SQRT1_2)> fabricWidth/2){x=x-r}
+      if ((fabricWidth - R + r*Math.SQRT1_2)> R){
+        x=R*Math.SQRT1_2
+        yOffset = fabricWidth-2*R+Math.SQRT1_2*r
+      } 
+      
+      if (2*R <= fabricWidth){ // one piece 
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 3*Math.PI/4,
+                endAngle:9*Math.PI/4,
+              }),
+            x:scale(R),
+            y:scale(R)
+          }
+        ]
+      } else { //2 pieces
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 3*Math.PI/2,
+                endAngle:9*Math.PI/4,
+              }),
+            x:scale(R),
+            y:scale(fabricWidth-(R+yOffset))
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI/2,
+                endAngle: 5*Math.PI/4,
+              }),
+            x:scale(x),
+            y:scale(R)
+          }
+        ]
+      }
+    }
   },
   
   {
     name: "Three Quarter circle layout on selvedge, curved sides together",	
     R: function(skirtLength,waistMeasurement){
     return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement){}
-  },
-  
-  {
-    name: "Smallest three quarter circle",
-    R: function(skirtLength,waistMeasurement){
-      return(R)
       },
     layoutGenerator:function(skirtLength,waistMeasurement){}
   }
