@@ -8,14 +8,14 @@ arc =d3.arc()
 var types = [
   {
     name: "Half circle", 
-    R: function(skirtLength,waistMeasurement){
-        r = skirt.waistMeasurement/Math.PI
-        R = skirt.skirtLength + r
-        return(R)
-      },
-    layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
+//    R: 
+  layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
       r = waistMeasurement/Math.PI
       R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
+    
       angle = Math.PI
       if (2*R <= fabricWidth){ 
         return [
@@ -62,14 +62,15 @@ var types = [
   },
   {
     name: "Full circle with centre back seam",	
-    R: function(skirtLength,waistMeasurement){
-          r = skirt.waistMeasurement/Math.PI
-          R = skirt.skirtLength + r
-          return(R)
-        },
+
     layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
       r = waistMeasurement/(2*Math.PI)
       R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
+
+      
       if (2*R <= fabricWidth){ // one piece 
         return [
           {
@@ -127,14 +128,14 @@ var types = [
   },  
   {
   name: "Full circle without centre back seam",	
-     R: function(skirtLength,waistMeasurement){
-          r = skirt.waistMeasurement/Math.PI
-          R = skirt.skirtLength + r
-          return(R)
-        },
+
     layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
       r = waistMeasurement/(2*Math.PI)
       R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
+      
       if (2*R <= fabricWidth){ // one piece 
         return [
           {
@@ -180,14 +181,12 @@ var types = [
   },
   {
   name: "Three Quarter circle, straight sides together",
-     R: function(skirtLength,waistMeasurement){
-          r = skirt.waistMeasurement/Math.PI
-          R = skirt.skirtLength + r*2/3
-          return(R)
-        },
     layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
-      r = waistMeasurement/(2*Math.PI)
+      r = 2*waistMeasurement/(3*Math.PI)
       R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
       
       x = 3*R - fabricWidth
       yOffset = 0
@@ -242,14 +241,14 @@ var types = [
   
   {
     name: "Three Quarter circle layout on selvedge, curved sides together",	
-    R: function(skirtLength,waistMeasurement){
-          r = skirt.waistMeasurement/Math.PI
-          R = skirt.skirtLength + r*2/3
-          return(R)
-        },
+
     layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
-      r = waistMeasurement/(2*Math.PI)
+
+      r = 2*waistMeasurement/(3*Math.PI)
       R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
       
       x = 3*R - fabricWidth
       yOffset = 0
@@ -312,12 +311,11 @@ var skirt = {
 //  seamAllowance : 0,
 //  hemAllowance : 0,
 //  waistBandWidth : 0,
-  fabricWidth : 112 
+  fabricWidth : 112
 }
 
 d3.select('#waistmeasurement')
   .on('change', function(){
-    console.log('here')
     skirt.waistMeasurement=this.value*1
     renderSkirt(skirt)
   })
@@ -403,9 +401,10 @@ function renderSkirt(skirt){
   
   pieces.exit().remove()
   
-  
   result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
   d3.select('#result').text(format(result))
+  d3.select('#inner_radius').text(format(skirt.r))
+  d3.select('#outer_radius').text(format(skirt.R))
   
   }
 
