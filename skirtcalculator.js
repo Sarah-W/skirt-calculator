@@ -302,7 +302,7 @@ var types = [
     }
   }, 
   {
-    name: "Three Quarter circle, layout on grain",	
+    name: "Three Quarter circle, layout on cross grain",	
 
     layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
 
