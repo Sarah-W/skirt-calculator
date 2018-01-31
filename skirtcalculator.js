@@ -300,6 +300,75 @@ var types = [
         ]
       }
     }
+  }, 
+  {
+    name: "Three Quarter circle, layout on grain",	
+
+    layoutGenerator:function(skirtLength,waistMeasurement,fabricWidth){
+
+      r = 2*waistMeasurement/(3*Math.PI)
+      R = skirtLength + r
+      
+      skirt.r = r
+      skirt.R = R
+      
+//      s=Math.sin(Math.PI/8) 
+      var s=0.3826834323650898
+//      c=Math.cos(Math.PI/8) 
+      var c=0.9238795325112867
+      
+      var x_offset = (2*R <= fabricWidth+2*s*r)? 0 : Math.sqrt(4*R**2-(fabricWidth+2*s*r)**2)
+      
+//      x = 3*R - fabricWidth
+//      yOffset = 0
+//      if ((fabricWidth - R + r*Math.SQRT1_2)> fabricWidth/2){x=x-r}
+//      if ((fabricWidth - R + r*Math.SQRT1_2)> R){
+//        x=R*Math.SQRT1_2
+//        yOffset = fabricWidth-2*R+Math.SQRT1_2*r
+//      } 
+//      
+      if (2*R <= fabricWidth){ // one piece 
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: Math.PI/2,
+                endAngle:2*Math.PI,
+              }),
+            x:scale(R),
+            y:scale(R)
+          }
+        ]
+      } else { //2 pieces
+        return [
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 13*Math.PI/8,
+                endAngle:19*Math.PI/8,
+              }),
+            x:scale(c*R),
+            y:scale(-1*s*r)
+          },
+          {
+            path:arc(  
+              {
+                innerRadius: scale(r), 
+                outerRadius: scale(R),
+                startAngle: 5*Math.PI/8,
+                endAngle: 11*Math.PI/8,
+              }),
+            x:scale(c*R+ x_offset),
+            y:scale(fabricWidth+(s*r))
+            
+          }
+        ]
+      }
+    }
   },
 ]
 
