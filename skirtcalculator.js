@@ -3,7 +3,7 @@
 var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
-arc = function(){
+var arc = function(){
   return d3.arc()(
     { 
       innerRadius: this.innerRadius, 
@@ -12,9 +12,46 @@ arc = function(){
       endAngle: this.endAngle,
     })}
 
-csa = function(){} //curved seam/hem allowances (top and bottom)
-ssa = function(){} //straight seam allowances (sides)
+var csa = function(){ //curved seam/hem allowances (top and bottom)
+  var waist =  d3.arc()(
+    { 
+      innerRadius: this.innerRadius-this.seamAllowance, 
+      outerRadius: this.innerRadius,
+      startAngle: this.startAngle,
+      endAngle: this.endAngle,
+    })
+  var hem =  d3.arc()(
+    { 
+      innerRadius: this.outerRadius, 
+      outerRadius: this.outerRadius+this.hemAllowance,
+      startAngle: this.startAngle,
+      endAngle: this.endAngle,
+    })
+  
+  return [{name:'waist', path:waist},{name:'hem', path:hem}]
+} 
+var ssa = function(){ //straight seam allowances (sides)
+  height= this.seamAllowance+this.hemAllowance+this.outerRadius-this.innerRadius
+  width = this.seamAllowance
 
+  
+  var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle)
+  var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle)
+  
+  transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle-Math.PI)/Math.PI )+")" 
+  
+
+  var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle)+this.seamAllowance*Math.cos(this.endAngle)
+  var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle)+this.seamAllowance*Math.sin(this.endAngle)
+
+  
+  transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle-Math.PI)/Math.PI)+")" 
+  
+  return [
+    {name:'start', height:height, width:width, transform:transform1},
+    {name:'end',   height:height, width:width, transform:transform2}
+  ]
+}
 var types = [
   {
     name: "Half circle", 
@@ -32,8 +69,8 @@ var types = [
             outerRadius: scale(R),
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
-            startAngle: Math.PI,
-            endAngle:0, 
+            endAngle: Math.PI,
+            startAngle:0, 
             x:scale(skirt.seamAllowance),
             y:scale(R+skirt.hemAllowance),
             path: arc,
@@ -58,6 +95,10 @@ var types = [
           },
           {
             path:arc,
+            csa: csa,
+            ssa: ssa,
+            seamAllowance: scale(skirt.seamAllowance),
+            hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
             outerRadius: scale(R),
             startAngle: Math.PI,
@@ -278,14 +319,14 @@ var types = [
       skirt.R = R
       
       f = skirt.fabricWidth-2*skirt.seamAllowance
-      x = 3*(R+skirt.hemAllowance) - skirt.fabricWidth
+      x = 3*(R+skirt.hemAllowance) - f
       
       
       yOffset = 0
       if ((f - R+skirt.hemAllowance + r*Math.SQRT1_2)> f/2){x=x-r}
       if ((f - R+skirt.hemAllowance + r*Math.SQRT1_2)> (R+skirt.hemAllowance)){
         x=R*Math.SQRT1_2
-        yOffset = fabricWidth-2*R+Math.SQRT1_2*r
+        yOffset = skirt.fabricWidth-2*R+Math.SQRT1_2*r
       } 
       
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth-2*skirt.seamAllowance){ // one piece 
@@ -300,8 +341,8 @@ var types = [
             outerRadius: scale(R),
             startAngle: 3*Math.PI/4,
             endAngle:9*Math.PI/4,
-            x:scale(R),
-            y:scale(R)
+            x:scale(R+skirt.hemAllowance),
+            y:scale(R+skirt.hemAllowance)
           }
         ]
       } else { //2 pieces
@@ -316,7 +357,7 @@ var types = [
             outerRadius: scale(R),
             startAngle: 3*Math.PI/2,
             endAngle:9*Math.PI/4,
-            x:scale(Math.SQRT1_2*R + Math.sqrt(4*(R+skirt.hemAllowance)**2-(f)**2)),
+            x:scale(Math.SQRT1_2*(R+skirt.hemAllowance) + Math.sqrt(4*(R+skirt.hemAllowance)**2-(f)**2)),
             y:scale(skirt.seamAllowance)
           },
           {
@@ -473,6 +514,44 @@ d3.select('#skirtchooser')
         .text(d.name)
     })
 
+function renderPiece(p){
+  var piece = d3.select(this)
+  var main = piece.selectAll('path.main').data([p.path()])
+  main.attr('d', d=>d)
+  main.enter()
+    .append('path')
+    .attr('d', d=>d)
+    .classed('main',true)
+    .merge(main)
+  main.exit().remove()
+  
+  var csa = piece.selectAll('path.csa').data(p.csa())
+  csa.attr('d', d=>d.path)
+  csa.enter()
+    .append('path')
+    .attr('d', d=>d.path)
+    .classed('csa',true)
+    .merge(csa)
+  csa.exit().remove()
+  
+  var ssa = piece.selectAll('rect.ssa').data(p.ssa())
+  ssa
+    .attr('height', d=>d.height)
+    .attr('width', d=>d.width)
+    .attr('transform', d=>d.transform)
+  ssa.enter()
+    .append('rect')
+    .attr('height', d=>d.height)
+    .attr('width', d=>d.width)
+    .attr('transform', d => d.transform)
+    .classed('ssa',true)
+    .merge(ssa)
+  ssa.exit().remove()
+      
+}
+
+
+
 function renderSkirt(skirt){
   var s = [skirt.fabricWidth]
   var fabric = d3.select('#layout').selectAll('rect').data(s)
@@ -493,24 +572,23 @@ function renderSkirt(skirt){
     .merge(layout)
     .attr('transform','translate(0,'+scale(skirt.fabricWidth)+')')
   
-  var pieces = layout.selectAll('path')
+  var pieces = layout.selectAll('g')
     .data(skirt.type.layoutGenerator(skirt))
   
   pieces
-    .attr('d', function(d) {return d.path()})
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
+    .each(renderPiece)
     
   
   pieces.enter()
-    .append('path')
-    .attr('d', function(d) {return d.path()})
+    .append('g')
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
-    .attr('fill','lightpink')
-    .attr('stroke','black')
+    .on('click', function(){console.log('clicked')})
+    .each(renderPiece)
     .merge(pieces)
   
   pieces.exit().remove()
-  
+ 
   result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
   d3.select('#result').text(format(result))
   d3.select('#inner_radius').text(format(skirt.r))
