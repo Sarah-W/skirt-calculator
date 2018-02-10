@@ -366,7 +366,6 @@ var types = [
 //      c=Math.cos(Math.PI/8) 
       var c=0.9238795325112867
       var f = skirt.fabricWidth-2*(skirt.seamAllowance*c)+2*(r-skirt.seamAllowance)*s //effective fabric width
-      console.log(f)
       
       var x_offset = (2*(R+skirt.hemAllowance) <= f) ? 0 : Math.sqrt(4*(R+skirt.hemAllowance)**2-(f)**2)
            
@@ -559,8 +558,8 @@ function renderSkirt(skirt){
  
   result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
   d3.select('#result').text(format(result))
-  d3.select('#inner_radius').text(format(skirt.r))
-  d3.select('#outer_radius').text(format(skirt.R))
+  d3.select('#inner_radius').text(format(skirt.r-skirt.seamAllowance))
+  d3.select('#outer_radius').text(format(skirt.R+skirt.hemAllowance))
   
   }
 
