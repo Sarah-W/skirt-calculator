@@ -4,13 +4,7 @@ var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
 var arc = function(){
-  return d3.arc()(
-    { 
-      innerRadius: this.innerRadius, 
-      outerRadius: this.outerRadius,
-      startAngle: this.startAngle,
-      endAngle: this.endAngle,
-    })}
+  return d3.arc()(this)} //'this' already has all of the bits we need  
 
 var csa = function(){ //curved seam/hem allowances (top and bottom)
   var waist =  d3.arc()(
@@ -33,17 +27,14 @@ var csa = function(){ //curved seam/hem allowances (top and bottom)
 var ssa = function(){ //straight seam allowances (sides)
   height= this.seamAllowance+this.hemAllowance+this.outerRadius-this.innerRadius
   width = this.seamAllowance
-
   
   var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle)
   var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle)
   
   transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle-Math.PI)/Math.PI )+")" 
-  
 
   var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle)+this.seamAllowance*Math.cos(this.endAngle)
   var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle)+this.seamAllowance*Math.sin(this.endAngle)
-
   
   transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle-Math.PI)/Math.PI)+")" 
   
@@ -52,6 +43,14 @@ var ssa = function(){ //straight seam allowances (sides)
     {name:'end',   height:height, width:width, transform:transform2}
   ]
 }
+
+var basePiece = {
+  path: arc,
+  csa: csa,
+  ssa: ssa,
+ 
+}
+
 var types = [
   {
     name: "Half circle", 
@@ -60,30 +59,26 @@ var types = [
       R = skirt.skirtLength + r
       skirt.r = r
       skirt.R = R
-    
+      
       angle = Math.PI
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth){ 
         return [
           {
-            innerRadius: scale(r), 
-            outerRadius: scale(R),
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
+            innerRadius: scale(r), 
+            outerRadius: scale(R),      
             endAngle: Math.PI,
             startAngle:0, 
             x:scale(skirt.seamAllowance),
-            y:scale(R+skirt.hemAllowance),
-            path: arc,
-            csa: csa,
-            ssa: ssa
+            y:scale(R+skirt.hemAllowance),  
           }
         ]
       } else {
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -94,9 +89,7 @@ var types = [
             y:scale(skirt.seamAllowance)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -107,7 +100,6 @@ var types = [
             y: scale(skirt.fabricWidth-skirt.seamAllowance)
           }
         ]
-        
       }
     }
   },
@@ -122,9 +114,7 @@ var types = [
       if (2*R+(skirt.hemAllowance) <= skirt.fabricWidth){ // one piece 
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -138,9 +128,7 @@ var types = [
       } else { //3 pieces
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -151,9 +139,7 @@ var types = [
             y:scale(skirt.seamAllowance)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -164,9 +150,7 @@ var types = [
             y:scale(skirt.fabricWidth-skirt.seamAllowance)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -193,9 +177,7 @@ var types = [
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth){ // one piece 
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -209,9 +191,7 @@ var types = [
       } else { //2 pieces
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -222,9 +202,7 @@ var types = [
             y:scale(skirt.seamAllowance)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -252,8 +230,14 @@ var types = [
       f=skirt.fabricWidth-2*skirt.hemAllowance
       
       yOffset = 0
-      if ((f - R + r*Math.SQRT1_2)> f/2){x=x-r}
+      
+      if ((f - R+skirt.hemAllowance + (r-skirt.seamAllowance)*Math.SQRT1_2)> f/2){
+        console.log('option 1');
+        x=x-(r-skirt.seamAllowance)
+      }
+      
       if ((f - R + r*Math.SQRT1_2)> R){
+        console.log('option 2')
         x = (R+skirt.hemAllowance)*Math.SQRT1_2
         yOffset = f-2*R+Math.SQRT1_2*(r-2*skirt.seamAllowance)
       } 
@@ -261,9 +245,7 @@ var types = [
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth-2*skirt.seamAllowance){ // one piece 
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -277,9 +259,7 @@ var types = [
       } else { //2 pieces
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+           ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -290,9 +270,7 @@ var types = [
             y:scale(skirt.fabricWidth-(R+yOffset+skirt.hemAllowance))
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -332,9 +310,7 @@ var types = [
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth-2*skirt.seamAllowance){ // one piece 
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -348,9 +324,7 @@ var types = [
       } else { //2 pieces
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -361,9 +335,7 @@ var types = [
             y:scale(skirt.seamAllowance)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -393,16 +365,15 @@ var types = [
       var s=0.3826834323650898
 //      c=Math.cos(Math.PI/8) 
       var c=0.9238795325112867
-      var f = skirt.fabricWidth-2*skirt.seamAllowance
+      var f = skirt.fabricWidth-2*(skirt.seamAllowance*c)+2*(r-skirt.seamAllowance)*s //effective fabric width
+      console.log(f)
       
-      var x_offset = (2*(R+skirt.hemAllowance) <= f+2*s*r) ? 0 : Math.sqrt(4*(R+skirt.hemAllowance)**2-(f+2*s*r)**2)
+      var x_offset = (2*(R+skirt.hemAllowance) <= f) ? 0 : Math.sqrt(4*(R+skirt.hemAllowance)**2-(f)**2)
            
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth-2*skirt.seamAllowance){ // one piece 
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
@@ -416,30 +387,27 @@ var types = [
       } else { //2 pieces
         return [
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+           ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
             outerRadius: scale(R),
             startAngle: 13*Math.PI/8,
             endAngle:19*Math.PI/8,
-            x:scale(c*(R+skirt.hemAllowance)),
-            y:scale(-1*r*s + skirt.seamAllowance*c)
+            x:scale(c*(R+skirt.hemAllowance)+s*skirt.seamAllowance),
+            y:scale(-1*(r-skirt.seamAllowance)*s + skirt.seamAllowance*c)
           },
           {
-            path:arc,
-            csa: csa,
-            ssa: ssa,
+            ...basePiece,
             seamAllowance: scale(skirt.seamAllowance),
             hemAllowance:scale(skirt.hemAllowance),
             innerRadius: scale(r), 
             outerRadius: scale(R),
             startAngle: 5*Math.PI/8,
             endAngle: 11*Math.PI/8,
-            x:scale(c*(R+skirt.hemAllowance)+ x_offset),
-            y:scale(skirt.fabricWidth +s*r - skirt.seamAllowance*c)
+//            x:scale(c*(R+skirt.hemAllowance)+ x_offset),
+            x:scale(c*(R+skirt.hemAllowance)+s*skirt.seamAllowance+x_offset),
+            y:scale(skirt.fabricWidth + (r-skirt.seamAllowance)*s - skirt.seamAllowance*c)
             
           }
         ]
