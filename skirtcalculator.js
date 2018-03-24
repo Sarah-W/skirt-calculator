@@ -231,15 +231,15 @@ var types = [
       
       yOffset = 0
       
-      if ((f - R+skirt.hemAllowance + (r-skirt.seamAllowance)*Math.SQRT1_2)> f/2){
+      if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > f/2){
         console.log('option 1');
-        x=x-(r-skirt.seamAllowance)
+        x=x-(r-skirt.seamAllowance*Math.SQRT1_2)
       }
       
-      if ((f - R + r*Math.SQRT1_2)> R){
+      if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > R+skirt.hemAllowance){
         console.log('option 2')
-        x = (R+skirt.hemAllowance)*Math.SQRT1_2
-        yOffset = f-2*R+Math.SQRT1_2*(r-2*skirt.seamAllowance)
+        x = (R+skirt.hemAllowance+skirt.seamAllowance)*Math.SQRT1_2
+        yOffset = f-2*R+Math.SQRT1_2*(r-2*skirt.seamAllowance)-skirt.seamAllowance
       } 
       
       if (2*(R+skirt.hemAllowance) <= skirt.fabricWidth-2*skirt.seamAllowance){ // one piece 
@@ -266,7 +266,7 @@ var types = [
             outerRadius: scale(R),
             startAngle: 3*Math.PI/2,
             endAngle:9*Math.PI/4,
-            x:scale(R+skirt.hemAllowance),
+            x:scale(R+skirt.hemAllowance), 
             y:scale(skirt.fabricWidth-(R+yOffset+skirt.hemAllowance))
           },
           {
@@ -426,6 +426,7 @@ var skirt = {
   fabricWidth : 112
 }
 
+
 d3.select('#waistmeasurement')
   .on('change', function(){
     skirt.waistMeasurement=this.value*1
@@ -517,8 +518,6 @@ function renderPiece(p){
       
 }
 
-
-
 function renderSkirt(skirt){
   var s = [skirt.fabricWidth]
   var fabric = d3.select('#layout').selectAll('rect').data(s)
@@ -551,6 +550,7 @@ function renderSkirt(skirt){
     .append('g')
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
     .on('click', function(){console.log('clicked')})
+    .on('drag', function(){console.log('draged')})
     .each(renderPiece)
     .merge(pieces)
   
