@@ -3,8 +3,18 @@
 var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
+var rotate = function(d){ // rotate the piece on click
+  d.pieceRotaton = d.pieceRotaton ? d.pieceRotaton + 45 : 45
+  console.log('translate('+d.x+','+(-1*d.y)+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+  d3.select(this)
+    .attr('transform',d => 'translate('+d.x+','+(-1*d.y)+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+}
+
 var arc = function(){
-  return d3.arc()(this)} //'this' already has all of the bits we need  
+  return d3.arc()(this)} //'this' already has all of the bits we need 
+
+var centroid = function(){
+  return d3.arc().centroid(this)}
 
 var csa = function(){ //curved seam/hem allowances (top and bottom)
   var waist =  d3.arc()(
@@ -46,6 +56,7 @@ var ssa = function(){ //straight seam allowances (sides)
 
 var basePiece = {
   path: arc,
+  centroid:centroid,
   csa: csa,
   ssa: ssa,
  
@@ -549,8 +560,8 @@ function renderSkirt(skirt){
   pieces.enter()
     .append('g')
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
-    .on('click', function(){console.log('clicked')})
-    .on('drag', function(){console.log('draged')})
+    .on('click', rotate)
+//    .on('drag', function(){console.log('dragged')})
     .each(renderPiece)
     .merge(pieces)
   
@@ -562,5 +573,7 @@ function renderSkirt(skirt){
   d3.select('#outer_radius').text(format(skirt.R+skirt.hemAllowance))
   
   }
+
+
 
 renderSkirt(skirt)
