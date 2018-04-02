@@ -4,10 +4,11 @@ var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
 var rotate = function(d){ // rotate the piece on click
-  d.pieceRotaton = d.pieceRotaton ? d.pieceRotaton + 45 : 45
-  console.log('translate('+d.x+','+(-1*d.y)+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+  d.pieceRotaton = d.pieceRotaton + 45
   d3.select(this)
-    .attr('transform',d => 'translate('+d.x+','+(-1*d.y)+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+   result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
+  d3.select('#result').text(format(result))
 }
 
 var arc = function(){
@@ -59,7 +60,9 @@ var basePiece = {
   centroid:centroid,
   csa: csa,
   ssa: ssa,
- 
+  dx:0,
+  dy:0,
+  pieceRotaton : 0
 }
 
 var types = [
@@ -561,9 +564,15 @@ function renderSkirt(skirt){
     .append('g')
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
     .on('click', rotate)
-//    .on('drag', function(){console.log('dragged')})
+    .call(d3.drag()
+        .on("start", dragstart)
+        .on("drag", dragged)
+        .on("end", dragend)
+         )
     .each(renderPiece)
     .merge(pieces)
+  
+ 
   
   pieces.exit().remove()
  
@@ -574,6 +583,19 @@ function renderSkirt(skirt){
   
   }
 
+function printLength(){ 
+ result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
+  d3.select('#result').text(format(result))
+}
 
+function dragstart(d){console.log('start',d3.event)} 
+function dragged(d){
+  d.dy = d.dy - d3.event.dy
+  d.dx = d.dx + d3.event.dx
+  d3.select(this)
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+  printLength()
+} 
+function dragend(d){console.log('end',d3.event)} 
 
 renderSkirt(skirt)
