@@ -3,17 +3,15 @@
 var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
-var rotate = function(d){ // rotate the piece on click
-  d.pieceRotaton = d.pieceRotaton + 45
-  d3.select(this)
-    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
-   result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
-  d3.select('#result').text(format(result))
-}
+
 
 var arc = function(){
-  return d3.arc()(this)} //'this' already has all of the bits we need 
-
+  return d3.arc()({
+          innerRadius: this.innerRadius,
+          outerRadius: this.outerRadius,
+          startAngle: this.startAngle+this.pieceRotaton,
+          endAngle: this.endAngle+this.pieceRotaton,
+  })} 
 var centroid = function(){
   return d3.arc().centroid(this)}
 
@@ -22,15 +20,15 @@ var csa = function(){ //curved seam/hem allowances (top and bottom)
     { 
       innerRadius: this.innerRadius-this.seamAllowance, 
       outerRadius: this.innerRadius,
-      startAngle: this.startAngle,
-      endAngle: this.endAngle,
+      startAngle: this.startAngle+this.pieceRotaton,
+      endAngle: this.endAngle+this.pieceRotaton,
     })
   var hem =  d3.arc()(
     { 
       innerRadius: this.outerRadius, 
       outerRadius: this.outerRadius+this.hemAllowance,
-      startAngle: this.startAngle,
-      endAngle: this.endAngle,
+      startAngle: this.startAngle+this.pieceRotaton,
+      endAngle: this.endAngle+this.pieceRotaton,
     })
   
   return [{name:'waist', path:waist},{name:'hem', path:hem}]
@@ -39,15 +37,15 @@ var ssa = function(){ //straight seam allowances (sides)
   height= this.seamAllowance+this.hemAllowance+this.outerRadius-this.innerRadius
   width = this.seamAllowance
   
-  var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle)
-  var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle)
+  var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle+this.pieceRotaton)
+  var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle+this.pieceRotaton)
   
-  transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle-Math.PI)/Math.PI )+")" 
+  transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle+this.pieceRotaton-Math.PI)/Math.PI )+")" 
 
-  var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle)+this.seamAllowance*Math.cos(this.endAngle)
-  var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle)+this.seamAllowance*Math.sin(this.endAngle)
+  var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle+this.pieceRotaton)+this.seamAllowance*Math.cos(this.endAngle+this.pieceRotaton)
+  var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle+this.pieceRotaton)+this.seamAllowance*Math.sin(this.endAngle+this.pieceRotaton)
   
-  transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle-Math.PI)/Math.PI)+")" 
+  transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle+this.pieceRotaton-Math.PI)/Math.PI)+")" 
   
   return [
     {name:'start', height:height, width:width, transform:transform1},
@@ -496,8 +494,9 @@ d3.select('#skirtchooser')
         .text(d.name)
     })
 
-function renderPiece(p){
-  var piece = d3.select(this)
+function renderPiece(selection,p){
+  console.log(selection)
+  var piece = selection
   var main = piece.selectAll('path.main').data([p.path()])
   main.attr('d', d=>d)
   main.enter()
@@ -557,7 +556,7 @@ function renderSkirt(skirt){
   
   pieces
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
-    .each(renderPiece)
+    .each(function(d){d3.select(this).call(renderPiece,d)})
     
   
   pieces.enter()
@@ -569,7 +568,7 @@ function renderSkirt(skirt){
         .on("drag", dragged)
         .on("end", dragend)
          )
-    .each(renderPiece)
+    .each(function(d){d3.select(this).call(renderPiece,d)})
     .merge(pieces)
   
  
@@ -588,12 +587,18 @@ function printLength(){
   d3.select('#result').text(format(result))
 }
 
+var rotate = function(d){ // rotate the piece on click
+  d.pieceRotaton = d.pieceRotaton + Math.PI/4
+  d3.select(this).call(renderPiece,d)
+  d3.select('#result').text(format(result))
+}
+
 function dragstart(d){console.log('start',d3.event)} 
 function dragged(d){
   d.dy = d.dy - d3.event.dy
   d.dx = d.dx + d3.event.dx
   d3.select(this)
-    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+') rotate('+d.pieceRotaton+' '+d.centroid()[0]+' '+d.centroid()[1]+')')
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+')')
   printLength()
 } 
 function dragend(d){console.log('end',d3.event)} 
