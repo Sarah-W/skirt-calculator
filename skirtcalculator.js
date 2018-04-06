@@ -13,7 +13,12 @@ var arc = function(){
           endAngle: this.endAngle+this.pieceRotaton,
   })} 
 var centroid = function(){
-  return d3.arc().centroid(this)}
+  return d3.arc().centroid({
+          innerRadius: this.innerRadius,
+          outerRadius: this.outerRadius,
+          startAngle: this.startAngle+this.pieceRotaton,
+          endAngle: this.endAngle+this.pieceRotaton,
+  })}
 
 var csa = function(){ //curved seam/hem allowances (top and bottom)
   var waist =  d3.arc()(
@@ -244,12 +249,10 @@ var types = [
       yOffset = 0
       
       if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > f/2){
-        console.log('option 1');
         x=x-(r-skirt.seamAllowance*Math.SQRT1_2)
       }
       
       if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > R+skirt.hemAllowance){
-        console.log('option 2')
         x = (R+skirt.hemAllowance+skirt.seamAllowance)*Math.SQRT1_2
         yOffset = f-2*R+Math.SQRT1_2*(r-2*skirt.seamAllowance)-skirt.seamAllowance
       } 
@@ -495,7 +498,7 @@ d3.select('#skirtchooser')
     })
 
 function renderPiece(selection,p){
-  console.log(selection)
+//  console.log(selection)
   var piece = selection
   var main = piece.selectAll('path.main').data([p.path()])
   main.attr('d', d=>d)
@@ -588,12 +591,22 @@ function printLength(){
 }
 
 var rotate = function(d){ // rotate the piece on click
+  oldCentroid = d.centroid()
   d.pieceRotaton = d.pieceRotaton + Math.PI/4
-  d3.select(this).call(renderPiece,d)
-  d3.select('#result').text(format(result))
+  newCentroid = d.centroid()
+  dx=oldCentroid[0]-newCentroid[0]
+  dy=oldCentroid[1]-newCentroid[1]
+  d.dx=d.dx+dx
+  d.dy=d.dy-dy
+  
+  d3.select(this)
+    .call(renderPiece,d)
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+')')
+  
+  printLength()
 }
 
-function dragstart(d){console.log('start',d3.event)} 
+function dragstart(d){} 
 function dragged(d){
   d.dy = d.dy - d3.event.dy
   d.dx = d.dx + d3.event.dx
@@ -601,6 +614,6 @@ function dragged(d){
     .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+')')
   printLength()
 } 
-function dragend(d){console.log('end',d3.event)} 
+function dragend(d){} 
 
 renderSkirt(skirt)
