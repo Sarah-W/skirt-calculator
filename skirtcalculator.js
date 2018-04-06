@@ -3,23 +3,37 @@
 var format = d3.format(",.0f")
 var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
 
+
+
 var arc = function(){
-  return d3.arc()(this)} //'this' already has all of the bits we need  
+  return d3.arc()({
+          innerRadius: this.innerRadius,
+          outerRadius: this.outerRadius,
+          startAngle: this.startAngle+this.pieceRotaton,
+          endAngle: this.endAngle+this.pieceRotaton,
+  })} 
+var centroid = function(){
+  return d3.arc().centroid({
+          innerRadius: this.innerRadius,
+          outerRadius: this.outerRadius,
+          startAngle: this.startAngle+this.pieceRotaton,
+          endAngle: this.endAngle+this.pieceRotaton,
+  })}
 
 var csa = function(){ //curved seam/hem allowances (top and bottom)
   var waist =  d3.arc()(
     { 
       innerRadius: this.innerRadius-this.seamAllowance, 
       outerRadius: this.innerRadius,
-      startAngle: this.startAngle,
-      endAngle: this.endAngle,
+      startAngle: this.startAngle+this.pieceRotaton,
+      endAngle: this.endAngle+this.pieceRotaton,
     })
   var hem =  d3.arc()(
     { 
       innerRadius: this.outerRadius, 
       outerRadius: this.outerRadius+this.hemAllowance,
-      startAngle: this.startAngle,
-      endAngle: this.endAngle,
+      startAngle: this.startAngle+this.pieceRotaton,
+      endAngle: this.endAngle+this.pieceRotaton,
     })
   
   return [{name:'waist', path:waist},{name:'hem', path:hem}]
@@ -28,15 +42,15 @@ var ssa = function(){ //straight seam allowances (sides)
   height= this.seamAllowance+this.hemAllowance+this.outerRadius-this.innerRadius
   width = this.seamAllowance
   
-  var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle)
-  var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle)
+  var x1=(this.innerRadius-this.seamAllowance)*Math.sin(this.startAngle+this.pieceRotaton)
+  var y1=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.startAngle+this.pieceRotaton)
   
-  transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle-Math.PI)/Math.PI )+")" 
+  transform1 =  "translate("+x1+","+y1+") rotate("+(180*(this.startAngle+this.pieceRotaton-Math.PI)/Math.PI )+")" 
 
-  var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle)+this.seamAllowance*Math.cos(this.endAngle)
-  var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle)+this.seamAllowance*Math.sin(this.endAngle)
+  var x2=(this.innerRadius-this.seamAllowance)*Math.sin(this.endAngle+this.pieceRotaton)+this.seamAllowance*Math.cos(this.endAngle+this.pieceRotaton)
+  var y2=(this.innerRadius-this.seamAllowance)*-1*Math.cos(this.endAngle+this.pieceRotaton)+this.seamAllowance*Math.sin(this.endAngle+this.pieceRotaton)
   
-  transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle-Math.PI)/Math.PI)+")" 
+  transform2 =  "translate("+x2+","+y2+") rotate("+(180*(this.endAngle+this.pieceRotaton-Math.PI)/Math.PI)+")" 
   
   return [
     {name:'start', height:height, width:width, transform:transform1},
@@ -46,9 +60,12 @@ var ssa = function(){ //straight seam allowances (sides)
 
 var basePiece = {
   path: arc,
+  centroid:centroid,
   csa: csa,
   ssa: ssa,
- 
+  dx:0,
+  dy:0,
+  pieceRotaton : 0
 }
 
 var types = [
@@ -232,12 +249,10 @@ var types = [
       yOffset = 0
       
       if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > f/2){
-        console.log('option 1');
         x=x-(r-skirt.seamAllowance*Math.SQRT1_2)
       }
       
       if ((f - R+(r-skirt.seamAllowance)*Math.SQRT1_2) > R+skirt.hemAllowance){
-        console.log('option 2')
         x = (R+skirt.hemAllowance+skirt.seamAllowance)*Math.SQRT1_2
         yOffset = f-2*R+Math.SQRT1_2*(r-2*skirt.seamAllowance)-skirt.seamAllowance
       } 
@@ -482,8 +497,9 @@ d3.select('#skirtchooser')
         .text(d.name)
     })
 
-function renderPiece(p){
-  var piece = d3.select(this)
+function renderPiece(selection,p){
+//  console.log(selection)
+  var piece = selection
   var main = piece.selectAll('path.main').data([p.path()])
   main.attr('d', d=>d)
   main.enter()
@@ -543,16 +559,22 @@ function renderSkirt(skirt){
   
   pieces
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
-    .each(renderPiece)
+    .each(function(d){d3.select(this).call(renderPiece,d)})
     
   
   pieces.enter()
     .append('g')
     .attr('transform',d=> 'translate('+d.x+','+(-1*d.y)+')')
-    .on('click', function(){console.log('clicked')})
-    .on('drag', function(){console.log('draged')})
-    .each(renderPiece)
+    .on('click', rotate)
+    .call(d3.drag()
+        .on("start", dragstart)
+        .on("drag", dragged)
+        .on("end", dragend)
+         )
+    .each(function(d){d3.select(this).call(renderPiece,d)})
     .merge(pieces)
+  
+ 
   
   pieces.exit().remove()
  
@@ -562,5 +584,36 @@ function renderSkirt(skirt){
   d3.select('#outer_radius').text(format(skirt.R+skirt.hemAllowance))
   
   }
+
+function printLength(){ 
+ result = d3.select('#pieces').node().getBoundingClientRect().width*(1/scale(1))
+  d3.select('#result').text(format(result))
+}
+
+var rotate = function(d){ // rotate the piece on click
+  oldCentroid = d.centroid()
+  d.pieceRotaton = d.pieceRotaton + Math.PI/4
+  newCentroid = d.centroid()
+  dx=oldCentroid[0]-newCentroid[0]
+  dy=oldCentroid[1]-newCentroid[1]
+  d.dx=d.dx+dx
+  d.dy=d.dy-dy
+  
+  d3.select(this)
+    .call(renderPiece,d)
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+')')
+  
+  printLength()
+}
+
+function dragstart(d){} 
+function dragged(d){
+  d.dy = d.dy - d3.event.dy
+  d.dx = d.dx + d3.event.dx
+  d3.select(this)
+    .attr('transform',d => 'translate('+(d.x+d.dx)+','+(-1*(d.y+d.dy))+')')
+  printLength()
+} 
+function dragend(d){} 
 
 renderSkirt(skirt)
