@@ -531,21 +531,31 @@ function renderPiece(selection,p){
     .classed('ssa',true)
     .merge(ssa)
   ssa.exit().remove()
-      
-}
+      }
 
 function renderSkirt(skirt){
+  divwidth = d3.select('#layoutdiv').node().getBoundingClientRect().width - 30
+  
   var s = [skirt.fabricWidth]
-  var fabric = d3.select('#layout').selectAll('rect').data(s)
-  fabric.attr('width',1000)
-    .attr('height', d=>scale(d))
+  
+  var fabric = d3.select('#layout')
+    .attr('width', divwidth)
+      .selectAll('g#layoutg').data(s)
+  
+  console.log(fabric)
+  
+  fabric.select('rect.fabric')
+   .attr('height', d=>{console.log('second pass',d);return scale(d)})
 
-  fabric.enter().append('rect')
-    .classed('fabric',true)  
-    .attr('width',1000)
-    .attr('height', d=>scale(d))
-    .attr('fill','#7b7b7b')
-    .merge(fabric)
+  fabric.enter()
+    .append('g')
+      .attr('id','layoutg')
+      .attr('transform','translate(50,50)')
+      .append('rect')
+        .classed('fabric',true)  
+        .attr('width',divwidth-100)
+        .attr('height', d=>scale(d))
+        .merge(fabric)
   
   var layout =d3.select('#layout').selectAll('g#pieces').data([1])
   
@@ -573,8 +583,6 @@ function renderSkirt(skirt){
          )
     .each(function(d){d3.select(this).call(renderPiece,d)})
     .merge(pieces)
-  
- 
   
   pieces.exit().remove()
  
