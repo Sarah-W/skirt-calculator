@@ -1,8 +1,10 @@
 //default units are cm
 
 var format = d3.format(",.0f")
-var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
-
+//var scale = function(x){return 3*x} //gonna have to do some real scaling eventually
+var scale = d3.scaleLinear()
+xgridlines = d3.axisBottom(scale)
+ygridlines = d3.axisRight(scale)
 
 
 var arc = function(){
@@ -498,7 +500,6 @@ d3.select('#skirtchooser')
     })
 
 function renderPiece(selection,p){
-//  console.log(selection)
   var piece = selection
   var main = piece.selectAll('path.main').data([p.path()])
   main.attr('d', d=>d)
@@ -531,23 +532,62 @@ function renderPiece(selection,p){
     .classed('ssa',true)
     .merge(ssa)
   ssa.exit().remove()
-      
-}
+      }
 
 function renderSkirt(skirt){
-  var s = [skirt.fabricWidth]
-  var fabric = d3.select('#layout').selectAll('rect').data(s)
-  fabric.attr('width',1000)
-    .attr('height', d=>scale(d))
-
-  fabric.enter().append('rect')
-    .classed('fabric',true)  
-    .attr('width',1000)
-    .attr('height', d=>scale(d))
-    .attr('fill','#7b7b7b')
-    .merge(fabric)
+  divwidth = d3.select('#layoutdiv').node().getBoundingClientRect().width - 30
   
-  var layout =d3.select('#layout').selectAll('g#pieces').data([1])
+  scale.domain([0,(divwidth/3)]).range([0,divwidth])
+  
+  xscale = d3.scaleLinear().domain([-50/3,(divwidth-50)/3]).range([0,divwidth])
+  xgridlines.scale(xscale).tickSize(scale(skirt.fabricWidth)+100).ticks(10)
+//  xgridlines.tickSize(scale(skirt.fabricWidth)+10).ticks(10)
+  
+  d3.select('#layoutsvg')
+    .selectAll('g.xgridlines')
+    .data([0])
+    .enter()
+    .append('g')
+    .classed('xgridlines',true)
+
+    d3.select('g.xgridlines').call(xgridlines)
+  
+  yscale = d3.scaleLinear()
+    .domain([-50/3,skirt.fabricWidth+25/3])
+    .range([0,scale(skirt.fabricWidth)+75])
+  
+  ygridlines.scale(yscale).tickSize(divwidth-25).ticks(3)
+
+  
+  d3.select('#layoutsvg')
+    .selectAll('g.ygridlines')
+    .data([0]).enter()
+    .append('g')
+    .classed('ygridlines',true)
+
+    d3.select('g.ygridlines').call(ygridlines)
+ 
+  
+  var s = [skirt.fabricWidth]
+  var fabric = d3.select('#layoutsvg')
+    .attr('width', divwidth)
+    .attr('height', scale(skirt.fabricWidth)+300)
+      .selectAll('g#layoutg').data(s)
+  
+  fabric.select('rect.fabric')
+   .attr('height', d=>scale(d))
+
+  fabric.enter()
+    .append('g')
+      .attr('id','layoutg')
+      .attr('transform','translate(50,50)')
+      .append('rect')
+        .classed('fabric',true)  
+        .attr('width',divwidth-100)
+        .attr('height', d=>scale(d))
+        .merge(fabric)
+  
+  var layout =d3.select('#layoutg').selectAll('g#pieces').data([1])
   
   layout = layout.enter().append('g')
     .attr('id','pieces')
@@ -573,8 +613,6 @@ function renderSkirt(skirt){
          )
     .each(function(d){d3.select(this).call(renderPiece,d)})
     .merge(pieces)
-  
- 
   
   pieces.exit().remove()
  
