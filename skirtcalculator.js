@@ -548,7 +548,7 @@ function renderSkirt(skirt){
     .data([0])
     .enter()
     .append('g')
-    .classed('xgridlines',true)
+    .classed('xgridlines gridlines',true)
 
     d3.select('g.xgridlines').call(xgridlines)
   
@@ -563,15 +563,19 @@ function renderSkirt(skirt){
     .selectAll('g.ygridlines')
     .data([0]).enter()
     .append('g')
-    .classed('ygridlines',true)
+    .classed('ygridlines gridlines',true)
 
     d3.select('g.ygridlines').call(ygridlines)
  
+  d3.selectAll('g.gridlines').selectAll('path').attr('stroke',null)
+  ticks = d3.selectAll('g.tick')
+  ticks.selectAll('line').attr('stroke', null)
+  ticks.selectAll('text').attr('fill', null)
   
   var s = [skirt.fabricWidth]
   var fabric = d3.select('#layoutsvg')
     .attr('width', divwidth)
-    .attr('height', scale(skirt.fabricWidth)+300)
+    .attr('height', scale(skirt.fabricWidth)+150)
       .selectAll('g#layoutg').data(s)
   
   fabric.select('rect.fabric')

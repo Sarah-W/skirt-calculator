@@ -1,6 +1,8 @@
 
 .fabric{
-  fill: #7b7b7b
+  fill: #303030;
+  opacity: 0.8
+    
 }
 .main{
   fill:lightpink;
@@ -15,5 +17,13 @@
 }
 
 svg{
-  background-color: azure
+  background-color: azure;
+  border: solid thin black;
+}
+
+g.tick line {
+    stroke: #0e8a8a;
+}
+g.tick text {
+    fill: #0e8a8a;
 }
